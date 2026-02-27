@@ -1,6 +1,26 @@
 {
   "entries": [
     {
+      "id": 1772202506348,
+      "farmer": "gavi",
+      "shift": "Evening",
+      "type": "Cow",
+      "litres": 12,
+      "fat": "12",
+      "total": 456,
+      "date": "2026-02-27T14:28:26.348Z"
+    },
+    {
+      "id": 1772202472989,
+      "farmer": "nistha ki maa mkc",
+      "shift": "Morning",
+      "type": "Buffalo",
+      "litres": 12,
+      "fat": "12312",
+      "total": 456,
+      "date": "2026-02-27T14:27:52.989Z"
+    },
+    {
       "id": 1772202007516,
       "farmer": "gavi",
       "shift": "Morning",
