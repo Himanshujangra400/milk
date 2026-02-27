@@ -12,20 +12,39 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
 
-  // 1. LocalStorage se data load karna
-  const [entries, setEntries] = useState(() => {
-    const savedEntries = localStorage.getItem('dairy_entries');
-    return savedEntries ? JSON.parse(savedEntries) : [];
-  });
+  // 1. entries state is kept in memory and synced with backend
+  const [entries, setEntries] = useState([]);
 
-  // 2. Data save karne ka effect
+  // 2. load from server on first render
   useEffect(() => {
-    localStorage.setItem('dairy_entries', JSON.stringify(entries));
-  }, [entries]);
+    const fetchEntries = async () => {
+      try {
+        const res = await fetch('/api/entries');
+        if (res.ok) {
+          const data = await res.json();
+          setEntries(data);
+        }
+      } catch (err) {
+        console.error('could not load entries', err);
+      }
+    };
 
-  // 3. Nayi entry add karne ka function
-  const addEntry = (newEntry) => {
-    setEntries([newEntry, ...entries]); 
+    fetchEntries();
+  }, []);
+
+  // 3. add new entry by calling backend
+  const addEntry = async (newEntry) => {
+    try {
+      const res = await fetch('/api/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEntry),
+      });
+      const saved = await res.json();
+      setEntries([saved, ...entries]);
+    } catch (err) {
+      console.error('failed to save entry', err);
+    }
   };
 
   // 4. Dynamic Calculations
@@ -33,6 +52,30 @@ function App() {
   const totalCash = entries.reduce((sum, item) => sum + Number(item.total), 0);
   const cowMilk = entries.filter(e => e.type === 'Cow').reduce((sum, item) => sum + Number(item.litres), 0);
   const buffaloMilk = entries.filter(e => e.type === 'Buffalo').reduce((sum, item) => sum + Number(item.litres), 0);
+
+  // helpers for update/delete
+  const updateEntry = async (updated) => {
+    try {
+      const res = await fetch(`/api/entries/${updated.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+      const data = await res.json();
+      setEntries(entries.map((e) => (e.id === data.id ? data : e)));
+    } catch (err) {
+      console.error('failed to update entry', err);
+    }
+  };
+
+  const deleteEntry = async (id) => {
+    try {
+      await fetch(`/api/entries/${id}`, { method: 'DELETE' });
+      setEntries(entries.filter((e) => e.id !== id));
+    } catch (err) {
+      console.error('failed to delete entry', err);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden relative">
@@ -79,7 +122,12 @@ function App() {
             </>
           ) : (
             /* MilkEntry: Yahan bhi 'entries' pass kiya hai taaki form ke niche wali table update ho sake */
-            <MilkEntry onSave={addEntry} entries={entries} />
+            <MilkEntry
+              onSave={addEntry}
+              onEdit={updateEntry}
+              onDelete={deleteEntry}
+              entries={entries}
+            />
           )}
         </main>
       </div>

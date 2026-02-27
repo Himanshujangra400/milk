@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Save, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const MilkEntry = ({ onSave, entries = [] }) => {
+const MilkEntry = ({ onSave, onEdit, onDelete, entries = [] }) => {
   // --- Form States (Logic starts here) ---
   const [farmer, setFarmer] = useState('');
   const [shift, setShift] = useState('Morning');
@@ -10,7 +10,8 @@ const MilkEntry = ({ onSave, entries = [] }) => {
   const [fat, setFat] = useState('');
   const [snf, setSnf] = useState('');
   const [fat2, setFat2] = useState(''); // Teesra box
-  const [rate, setRate] = useState(38.00); 
+  const [rate, setRate] = useState(38.00);
+  const [editingId, setEditingId] = useState(null);
 
   // Live Calculation
   const totalAmount = (parseFloat(litres) || 0) * rate;
@@ -22,8 +23,8 @@ const MilkEntry = ({ onSave, entries = [] }) => {
       return;
     }
 
-    const newEntry = {
-      id: Date.now(),
+    const entry = {
+      id: editingId || Date.now(),
       farmer: farmer,
       shift: shift,
       type: milkType,
@@ -33,15 +34,21 @@ const MilkEntry = ({ onSave, entries = [] }) => {
       date: new Date().toLocaleDateString()
     };
 
-    onSave(newEntry); // App.jsx को डेटा भेज दिया
-    
+    if (editingId && onEdit) {
+      onEdit(entry);
+      alert("Entry updated");
+    } else {
+      onSave(entry);
+      alert("Entry Saved Successfully!");
+    }
+
     // Form Reset
     setFarmer('');
     setLitres('');
     setFat('');
     setSnf('');
     setFat2('');
-    alert("Entry Saved Successfully!");
+    setEditingId(null);
   };
 
   return (
@@ -136,7 +143,7 @@ const MilkEntry = ({ onSave, entries = [] }) => {
             className="w-full md:w-fit bg-[#006A4E] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#00543d] transition flex items-center justify-center gap-2"
           >
             <Save size={20} />
-            Save Entry
+            {editingId ? 'Update Entry' : 'Save Entry'}
           </button>
         </div>
 
@@ -201,10 +208,27 @@ const MilkEntry = ({ onSave, entries = [] }) => {
                   <td className="px-6 py-4 text-gray-600">₹ 38.00</td>
                   <td className="px-6 py-4 font-bold text-gray-800">₹ {row.total.toFixed(2)}</td>
                   <td className="px-6 py-4 flex justify-center gap-2">
-                    <button className="p-2 text-white bg-green-600 rounded-md hover:bg-green-700 transition">
+                    <button
+                      className="p-2 text-white bg-green-600 rounded-md hover:bg-green-700 transition"
+                      onClick={() => {
+                        // populate form for editing
+                        setFarmer(row.farmer);
+                        setShift(row.shift);
+                        setMilkType(row.type);
+                        setLitres(row.litres);
+                        setFat(row.fat);
+                        setSnf('');
+                        setFat2('');
+                        setRate(row.rate || 38);
+                        setEditingId(row.id);
+                      }}
+                    >
                       <Edit2 size={16} />
                     </button>
-                    <button className="p-2 text-white bg-red-500 rounded-md hover:bg-red-600 transition">
+                    <button
+                      className="p-2 text-white bg-red-500 rounded-md hover:bg-red-600 transition"
+                      onClick={() => onDelete && onDelete(row.id)}
+                    >
                       <Trash2 size={16} />
                     </button>
                   </td>
